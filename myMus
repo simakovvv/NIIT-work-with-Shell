@@ -1,0 +1,154 @@
+#!/bin/bash
+cd 
+
+chmod 777 Music 
+
+cd /home/computer/Music
+ 
+#Open write in music 555 -for close write
+maxSize=10485761
+echo -e "myMus 1.0\n   You can:\n   -1- watch your music library\n   -2- watch lyric 
+   -3- search for it by name\n   -4- seach lyric\n   -5- add new tracks and texts from a file
+   -6- add lyric from song\n   -7- del old track and texts\n   -8- see the library change history   
+   -9- See which command you can configure the system backup     
+Also this program does a backup and writes the logs \in the music folder "
+
+add(){
+ echo "specify the path to the file: "
+ read path
+ echo "enter the file name"
+ read name > ./nameBuff
+ 
+ size=$(wc -c "$path""$name" | awk '{print $1}')
+ if [ $size -lt $maxSize ]
+ then 
+   if [ ! -e "$pwd""$name" ]
+   then
+      if [[ $name = *.mp3 || $name = *.wav || $name = *.flac || $name = *.txt ]]
+      then
+        echo "-file was added"
+        cp "$path""$name" "$pwd""$name"
+        echo "User $USER uploaded file $name. $date" >> history.txt
+      else
+        echo "File type not supported. Only .mp3, .wav, .flac, .txt"
+      fi
+    else 
+    echo "-file already exist. Do you want rename file?y/n :"
+    read -p "rename file?y/n" yn
+    case $yn in
+      [Yy]* ) read newname 
+              if [ ! -e "$pwd""$newname" ]
+              then
+                 echo "-file already exist. Do you want rename file? :"
+                 addTxt
+              else
+                cp "$path""$name" "$pwd""$newname"; echo "file was added"
+              fi;;
+      [Nn]* ) break;;
+          * ) echo "Please answer yes or no.";;
+    esac
+
+   fi
+   else
+     echo "-the file is larger than 10 mb. Decrease it"
+ fi
+}
+
+addTxt(){
+ echo "Enter song name:"
+    read name
+    if [ ! -e "$pwd""$name" ]
+    then
+      if [[ $name = *.txt ]]
+      then
+        echo "-file was added"
+        touch "$pwd""$name"
+        echo "User $USER uploaded file $name. $date" >> history.txt
+      else
+        echo "File type not supported. Only  .txt"
+      fi
+    else 
+      echo "-file already exist. Do you want rename file?"
+      read -p "rename file?y/n" yn
+      case $yn in
+        [Yy]* ) read name; touch "$pwd""$name"; echo "file was added";;
+        [Nn]* ) break;;
+            * ) echo "Please answer yes or no.";;
+      esac
+     fi
+     echo "You can create a text for the song. When you type 'end_of_song' keep it."
+         read data 
+         touch "$pwd$name"
+         file_name="$pwd$name"
+         while [ "$data" != "end_of_song" ]
+         do
+           echo "$data" >> $file_name
+           read data
+           
+         done
+         echo "Song was added" 
+
+}
+
+while [ "$DO" != exit ]
+do
+  echo "Enter the command:"
+  read COMMAND
+  date="$(date +"%y-%m-%d %T") $@"
+
+
+  case "$COMMAND" in
+    "1") find $pwd -name "*.mp3"  -o -name "*.wav" -o -name "*.flac"
+    ;;
+    "2") find $pwd -name "*.txt"
+    ;;
+    "5") add
+    ;;
+    "3") echo "Enter the file name:"
+             read namefind
+             if [ -e "$pwd""$namefind" ]
+             then
+               echo "$pwd""$namefind"" file is available in the library"
+               echo "User $USER seached file $namefind. $date" >> history.txt
+
+             else
+               echo "file not found"
+             fi
+    ;;
+
+    "4") echo "Enter the text:"
+             read textfind 
+             grep -r  "$textfind" /home/computer/Music/*.txt 
+             echo "User $USER seached text: $textfind. $date" >> history.txt
+
+    ;;
+    "6") addTxt
+         
+    ;;
+
+    "7") echo "Enter the file name"
+           read namedel
+           if [ -e "$pwd""$namedel" ]
+           then
+             echo "$pwd""$namedel"
+             rm "$pwd""$namedel"
+             echo "-File deleted"
+             echo "User $USER deleted file $namedel. $date" >> history.txt
+
+           else
+             echo "-There is no such file"
+           fi         
+    ;;
+    "8") cat "$pwd"history.txt
+    ;;
+    "9")  echo " /var/spool/cron/crontab -e"
+               echo "0 0 1 * \$USER cp -Rf \$pwd \"\$pwd\"\"/backup/\""
+    ;;
+
+    
+  esac
+done
+
+
+  
+
